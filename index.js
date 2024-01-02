@@ -3976,26 +3976,21 @@
 	    await localforage.setItem(key, value);
 	}
 	async function getCache(key) {
-	    var cache = await localforage.getItem(key);
-	    return cache;
+	    return await localforage.getItem(key);
 	}
 	function saveCache(appId, shown) {
-	    var found = false;
 	    for (var i = 0; i < shownState.length; i++) {
 	        if (shownState[i].appId == appId) {
 	            shownState[i].shown = shown;
-	            found = true;
-	            break;
+	            return;
 	        }
 	    }
-	    if (!found)
-	        shownState.push({ appId: appId, shown: shown });
+	    shownState.push({ appId: appId, shown: shown });
 	}
 	function getShown(appId) {
 	    for (var i = 0; i < shownState.length; i++) {
-	        if (shownState[i].appId == appId) {
+	        if (shownState[i].appId == appId)
 	            return shownState[i].shown;
-	        }
 	    }
 	    return true;
 	}
@@ -4321,7 +4316,7 @@
 	var completionist$r = "Completionist";
 	var allStyles$r = "All Styles";
 	var viewDetails$r = "View Details";
-	var showHideStats$r = "Show/Hide HLTB Stats";
+	var showHideStats$q = "Show/Hide HLTB Stats";
 	var bg = {
 		"default": "Default",
 		clean: clean$r,
@@ -4346,7 +4341,7 @@
 		completionist: completionist$r,
 		allStyles: allStyles$r,
 		viewDetails: viewDetails$r,
-		showHideStats: showHideStats$r
+		showHideStats: showHideStats$q
 	};
 
 	var clean$q = "\"Clean\"";
@@ -4371,7 +4366,7 @@
 	var completionist$q = "Completionist";
 	var allStyles$q = "All Styles";
 	var viewDetails$q = "View Details";
-	var showHideStats$q = "Show/Hide HLTB Stats";
+	var showHideStats$p = "Show/Hide HLTB Stats";
 	var cs = {
 		"default": "Default",
 		clean: clean$q,
@@ -4396,7 +4391,7 @@
 		completionist: completionist$q,
 		allStyles: allStyles$q,
 		viewDetails: viewDetails$q,
-		showHideStats: showHideStats$q
+		showHideStats: showHideStats$p
 	};
 
 	var clean$p = "\"Clean\"";
@@ -4421,7 +4416,7 @@
 	var completionist$p = "Completionist";
 	var allStyles$p = "All Styles";
 	var viewDetails$p = "View Details";
-	var showHideStats$p = "Show/Hide HLTB Stats";
+	var showHideStats$o = "Show/Hide HLTB Stats";
 	var da = {
 		"default": "Default",
 		clean: clean$p,
@@ -4446,7 +4441,7 @@
 		completionist: completionist$p,
 		allStyles: allStyles$p,
 		viewDetails: viewDetails$p,
-		showHideStats: showHideStats$p
+		showHideStats: showHideStats$o
 	};
 
 	var clean$o = "\"Simpel\"";
@@ -4464,14 +4459,13 @@
 	var toggleCompletionistStatDesc$o = "Shows/Hides just the completionist stat";
 	var toggleAllPlayStylesStat$o = "Toggle \"all play styles\" stat";
 	var toggleAllPlayStylesStatDesc$o = "Shows/Hides just the all play styles stat";
-	var clearCache$o = "Clear Cache";
+	var clearCache$o = "Leere den Cache";
 	var hours$o = "Stunden";
 	var mainStory$o = "Haupt Story";
 	var mainPlusExtras$o = "Haupt + Extras";
-	var completionist$o = "Vervöllständiger";
-	var allStyles$o = "Alle Styles";
-	var viewDetails$o = "View Details";
-	var showHideStats$o = "Show/Hide HLTB Stats";
+	var completionist$o = "Vervollständiger";
+	var allStyles$o = "Alle Style";
+	var viewDetails$o = "Zeige Details";
 	var HideStats$1 = "Verstecke HLTB Stats";
 	var ShowStats$1 = "Zeige HLTB Stats";
 	var de = {
@@ -4498,7 +4492,6 @@
 		completionist: completionist$o,
 		allStyles: allStyles$o,
 		viewDetails: viewDetails$o,
-		showHideStats: showHideStats$o,
 		HideStats: HideStats$1,
 		ShowStats: ShowStats$1
 	};
