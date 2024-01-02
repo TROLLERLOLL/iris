@@ -3984,12 +3984,15 @@
 	        await localforage.setItem(appId, stats);
 	    }
 	}
-	async function getShowHide(appId) {
-	    const stats = await localforage.getItem(appId);
-	    if (stats) {
-	        return stats.showStats;
+	function getShowHide(appId) {
+	    const stats = localforage.getItem(appId);
+	    while (true) {
+	        stats.then(function (ret) {
+	            if (ret)
+	                return ret?.showStats;
+	            return false;
+	        });
 	    }
-	    return false;
 	}
 	async function getStyle() {
 	    const hltbStyle = await localforage.getItem(styleKey);
@@ -5896,12 +5899,11 @@
 	        }, children: lang((shown ? 'ShowStats' : 'HideStats')) }, "hltb-for-deck-stats-settings"));
 	};
 
-	const addStatsSettingsMenuItem = async (children, appId) => {
+	const addStatsSettingsMenuItem = async (children, appId, shown) => {
 	    children.find((x) => x?.key === 'properties');
 	    // Find the index of the menu item for the game's properties
 	    const propertiesMenuItem = children.findIndex((item) => findInReactTree(item, (x) => x?.onSelected &&
 	        x.onSelected.toString().includes('AppProperties')));
-	    var shown = await getShowHide(appId.toString());
 	    // Add the HLTB Stats Setting Menu Item before the Properties Menu Item
 	    children.splice(propertiesMenuItem, 0, jsxRuntime.exports.jsx(HLTBContextMenuItem, { appId: `${appId}`, shown: shown }));
 	};
@@ -5913,6 +5915,7 @@
 	    patches.patchOne = afterPatch(LibraryContextMenu.prototype, 'render', (_, component) => {
 	        // Get the current app's ID
 	        const appid = component._owner.pendingProps.overview.appid;
+	        const shown = getShowHide(appid.toString());
 	        if (!patches.patchTwo) {
 	            patches.patchTwo = afterPatch(component.type.prototype, 'shouldComponentUpdate', ([nextProps], shouldUpdate) => {
 	                const hltbIndex = nextProps.children.findIndex((x) => x?.key === 'hltb-for-deck-stats-settings');
@@ -5930,14 +5933,14 @@
 	                            parentOverview._owner.pendingProps.overview
 	                                .appid;
 	                    }
-	                    addStatsSettingsMenuItem(nextProps.children, updatedAppid);
+	                    addStatsSettingsMenuItem(nextProps.children, updatedAppid, shown);
 	                }
 	                return shouldUpdate;
 	            });
 	        }
 	        else {
 	            // Add the Menu Item if we've already patched
-	            addStatsSettingsMenuItem(component.props.children, appid);
+	            addStatsSettingsMenuItem(component.props.children, appid, shown);
 	        }
 	        return component;
 	    });
