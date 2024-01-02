@@ -3971,11 +3971,13 @@
 	localforage.config({
 	    name: database,
 	});
+	var states = [];
 	async function updateCache(key, value) {
 	    await localforage.setItem(key, value);
 	}
 	async function getCache(key) {
-	    return await localforage.getItem(key);
+	    var cache = await localforage.getItem(key);
+	    return cache;
 	}
 	async function setShowHide(appId) {
 	    const stats = await localforage.getItem(appId);
@@ -3983,16 +3985,26 @@
 	        stats.showStats = !stats.showStats;
 	        await localforage.setItem(appId, stats);
 	    }
+	    saveState(stats);
+	}
+	function saveState(state) {
+	    var toremove = null;
+	    states.forEach(function (current) {
+	        if (current.gameId == state.gameId) {
+	            toremove = current;
+	        }
+	    });
+	    if (toremove != null) {
+	        delete states[states.indexOf(toremove)];
+	    }
+	    states.push(state);
 	}
 	function getShowHide(appId) {
-	    const stats = localforage.getItem(appId);
-	    while (true) {
-	        stats.then(function (ret) {
-	            if (ret)
-	                return ret?.showStats;
-	            return false;
-	        });
-	    }
+	    states.forEach(function (current) {
+	        if (current.gameId?.toString() == appId)
+	            return current.showStats;
+	    });
+	    return false;
 	}
 	async function getStyle() {
 	    const hltbStyle = await localforage.getItem(styleKey);
@@ -4054,6 +4066,7 @@
 	    React.useEffect(() => {
 	        const getData = async () => {
 	            const cache = await getCache(`${appId}`);
+	            saveState(cache);
 	            if (cache && !needCacheUpdate(cache.lastUpdatedAt)) {
 	                setStats(cache);
 	            }
