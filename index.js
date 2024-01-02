@@ -3992,7 +3992,7 @@
 	        if (shownState[i].appId == appId)
 	            return shownState[i].shown;
 	    }
-	    return true;
+	    return false;
 	}
 	async function setShowHide(appId) {
 	    const stats = await localforage.getItem(appId);
@@ -4017,6 +4017,7 @@
 	const clearCache$s = () => {
 	    const style = getStyle();
 	    localforage.clear();
+	    shownState = [];
 	    updateCache(styleKey, style);
 	};
 
@@ -4062,9 +4063,6 @@
 	    React.useEffect(() => {
 	        const getData = async () => {
 	            const cache = await getCache(`${appId}`);
-	            var shown = cache?.showStats;
-	            shown ?? (shown = true);
-	            saveCache(appId.toString(), shown);
 	            if (cache && !needCacheUpdate(cache.lastUpdatedAt)) {
 	                setStats(cache);
 	            }
@@ -4135,7 +4133,6 @@
 	                    }
 	                    setStats(newStats);
 	                    updateCache(`${appId}`, newStats);
-	                    saveCache(appId.toString(), newStats.showStats);
 	                }
 	                else {
 	                    console.error(result);
@@ -5774,6 +5771,7 @@
 	        };
 	    }, []);
 	    const { mainStat, mainPlusStat, completeStat, allStylesStat, gameId, showStats, } = useHltb(appId, game, serverApi);
+	    saveCache(appId.toString(), showStats);
 	    const { showMain, showMainPlus, showComplete, showAllStyles } = useStatPreferences();
 	    const hltbStyle = useStyle();
 	    const hideDetails = usePreference();
@@ -5906,7 +5904,7 @@
 	            setShowHide(appId);
 	            Navigation.Navigate('/hltb-for-deck/loading');
 	            setTimeout(() => Navigation.NavigateBack(), 1000);
-	        }, children: lang(getShown(appId) ? 'HideStats' : 'ShowStats') }, "hltb-for-deck-stats-settings"));
+	        }, children: lang(getShown(appId) ? 'HideStats' : 'ShowStats') + " " + getShown(appId).toString() }, "hltb-for-deck-stats-settings"));
 	};
 
 	const addStatsSettingsMenuItem = (children, appId) => {
