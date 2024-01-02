@@ -3971,7 +3971,7 @@
 	localforage.config({
 	    name: database,
 	});
-	var states = [];
+	var shownState = [];
 	async function updateCache(key, value) {
 	    await localforage.setItem(key, value);
 	}
@@ -3979,32 +3979,33 @@
 	    var cache = await localforage.getItem(key);
 	    return cache;
 	}
+	function saveCache(appId, shown) {
+	    var found = false;
+	    for (var i = 0; i < shownState.length; i++) {
+	        if (shownState[i].appId == appId) {
+	            shownState[i].shown = shown;
+	            found = true;
+	            break;
+	        }
+	    }
+	    if (!found)
+	        shownState.push({ appId: appId, shown: shown });
+	}
+	function getShown(appId) {
+	    for (var i = 0; i < shownState.length; i++) {
+	        if (shownState[i].appId == appId) {
+	            return shownState[i].shown;
+	        }
+	    }
+	    return true;
+	}
 	async function setShowHide(appId) {
 	    const stats = await localforage.getItem(appId);
 	    if (stats) {
 	        stats.showStats = !stats.showStats;
+	        saveCache(appId, stats.showStats);
 	        await localforage.setItem(appId, stats);
 	    }
-	    saveState(stats);
-	}
-	function saveState(state) {
-	    var toremove = null;
-	    states.forEach(function (current) {
-	        if (current.gameId == state.gameId) {
-	            toremove = current;
-	        }
-	    });
-	    if (toremove != null) {
-	        delete states[states.indexOf(toremove)];
-	    }
-	    states.push(state);
-	}
-	function getShowHide(appId) {
-	    states.forEach(function (current) {
-	        if (current.gameId?.toString() == appId)
-	            return current.showStats;
-	    });
-	    return false;
 	}
 	async function getStyle() {
 	    const hltbStyle = await localforage.getItem(styleKey);
@@ -4066,7 +4067,9 @@
 	    React.useEffect(() => {
 	        const getData = async () => {
 	            const cache = await getCache(`${appId}`);
-	            saveState(cache);
+	            var shown = cache?.showStats;
+	            shown ?? (shown = true);
+	            saveCache(appId.toString(), shown);
 	            if (cache && !needCacheUpdate(cache.lastUpdatedAt)) {
 	                setStats(cache);
 	            }
@@ -4137,6 +4140,7 @@
 	                    }
 	                    setStats(newStats);
 	                    updateCache(`${appId}`, newStats);
+	                    saveCache(appId.toString(), newStats.showStats);
 	                }
 	                else {
 	                    console.error(result);
@@ -5902,23 +5906,23 @@
 	                    } }) }), jsxRuntime.exports.jsx(PanelSectionRow, { children: jsxRuntime.exports.jsx(ToggleField, { label: lang('hideViewDetails'), description: lang('hideViewDetailsDesc'), checked: hideDetails, onChange: (checked) => updateCache(hideDetailsKey, checked) }) }), jsxRuntime.exports.jsx(PanelSectionRow, { children: jsxRuntime.exports.jsx(ToggleField, { label: lang('toggleMainStat'), description: lang('toggleMainStatDesc'), checked: preferences.showMain, onChange: () => toggleShowMain() }) }), jsxRuntime.exports.jsx(PanelSectionRow, { children: jsxRuntime.exports.jsx(ToggleField, { label: lang('toggleMainPlusStat'), description: lang('toggleMainPlusStatDesc'), checked: preferences.showMainPlus, onChange: () => toggleShowMainPlus() }) }), jsxRuntime.exports.jsx(PanelSectionRow, { children: jsxRuntime.exports.jsx(ToggleField, { label: lang('toggleCompletionistStat'), description: lang('toggleCompletionistStatDesc'), checked: preferences.showComplete, onChange: () => toggleShowComplete() }) }), jsxRuntime.exports.jsx(PanelSectionRow, { children: jsxRuntime.exports.jsx(ToggleField, { label: lang('toggleAllPlayStylesStat'), description: lang('toggleAllPlayStylesStatDesc'), checked: preferences.showAllStyles, onChange: () => toggleShowAllStyles() }) }), jsxRuntime.exports.jsx(PanelSectionRow, { children: jsxRuntime.exports.jsx(ButtonItem, { layout: "below", onClick: handleClearCache, children: lang('clearCache') }) })] }));
 	};
 
-	const HLTBContextMenuItem = ({ appId, shown }) => {
+	const HLTBContextMenuItem = ({ appId }) => {
 	    const lang = useLocalization();
 	    return (jsxRuntime.exports.jsx(MenuItem, { onSelected: () => {
 	            // little hacky but it works
 	            setShowHide(appId);
 	            Navigation.Navigate('/hltb-for-deck/loading');
 	            setTimeout(() => Navigation.NavigateBack(), 1000);
-	        }, children: lang((shown ? 'ShowStats' : 'HideStats')) }, "hltb-for-deck-stats-settings"));
+	        }, children: lang(getShown(appId) ? 'ShowStats' : 'HideStats') }, "hltb-for-deck-stats-settings"));
 	};
 
-	const addStatsSettingsMenuItem = async (children, appId, shown) => {
+	const addStatsSettingsMenuItem = (children, appId) => {
 	    children.find((x) => x?.key === 'properties');
 	    // Find the index of the menu item for the game's properties
 	    const propertiesMenuItem = children.findIndex((item) => findInReactTree(item, (x) => x?.onSelected &&
 	        x.onSelected.toString().includes('AppProperties')));
 	    // Add the HLTB Stats Setting Menu Item before the Properties Menu Item
-	    children.splice(propertiesMenuItem, 0, jsxRuntime.exports.jsx(HLTBContextMenuItem, { appId: `${appId}`, shown: shown }));
+	    children.splice(propertiesMenuItem, 0, jsxRuntime.exports.jsx(HLTBContextMenuItem, { appId: `${appId}` }));
 	};
 	const contextMenuPatch = (LibraryContextMenu) => {
 	    // Variable for all patches applied to LibraryContextMenu
@@ -5928,7 +5932,6 @@
 	    patches.patchOne = afterPatch(LibraryContextMenu.prototype, 'render', (_, component) => {
 	        // Get the current app's ID
 	        const appid = component._owner.pendingProps.overview.appid;
-	        const shown = getShowHide(appid.toString());
 	        if (!patches.patchTwo) {
 	            patches.patchTwo = afterPatch(component.type.prototype, 'shouldComponentUpdate', ([nextProps], shouldUpdate) => {
 	                const hltbIndex = nextProps.children.findIndex((x) => x?.key === 'hltb-for-deck-stats-settings');
@@ -5946,14 +5949,14 @@
 	                            parentOverview._owner.pendingProps.overview
 	                                .appid;
 	                    }
-	                    addStatsSettingsMenuItem(nextProps.children, updatedAppid, shown);
+	                    addStatsSettingsMenuItem(nextProps.children, updatedAppid);
 	                }
 	                return shouldUpdate;
 	            });
 	        }
 	        else {
 	            // Add the Menu Item if we've already patched
-	            addStatsSettingsMenuItem(component.props.children, appid, shown);
+	            addStatsSettingsMenuItem(component.props.children, appid);
 	        }
 	        return component;
 	    });
