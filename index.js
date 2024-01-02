@@ -5913,7 +5913,7 @@
 	            setShowHide(appId);
 	            Navigation.Navigate('/hltb-for-deck/loading');
 	            setTimeout(() => Navigation.NavigateBack(), 1000);
-	        }, children: lang(getShown(appId) ? 'ShowStats' : 'HideStats') }, "hltb-for-deck-stats-settings"));
+	        }, children: lang(getShown(appId) ? 'HideStats' : 'ShowStats') }, "hltb-for-deck-stats-settings"));
 	};
 
 	const addStatsSettingsMenuItem = (children, appId) => {
